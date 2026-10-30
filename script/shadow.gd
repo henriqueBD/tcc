@@ -1,44 +1,35 @@
 class_name SkewShadowSprite
 extends Sprite2D
-## Projects skewed/rotated copies of this sprite onto the ground as shadows.
-## Uses the strongest active ShadowLights (up to max_shadows, LIGHT_ONLY material)
-## plus one optional global sun shadow (no material).
-
 
 enum ShadowStyle {
-	ROTATE, ## Shadow pivots around the feet. Best for volumetric things (characters, trees, rocks).
-	SKEW,   ## Shadow keeps horizontal width and only skews. Best for flat props facing the camera (fences, signs).
+	ROTATE,
+	SKEW,
 }
 
 const LIGHT_ONLY: Material = preload("uid://ddwegu1bf4g7c")
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.4)
-## Shadow z_index relative to this sprite. show_behind_parent already keeps it under the sprite itself.
 const SHADOW_Z_INDEX: int = -1
 const MIN_STRENGTH: float = 0.01
-## Shadows shorter than this (in sprite heights) fade out under the light.
 const SHORT_SHADOW_FADE: float = 0.3
 
 class ShadowSource:
-	var direction: Vector2 ## Ground direction the shadow falls (normalized).
-	var length: float      ## Shadow length as a multiple of sprite height.
-	var strength: float    ## 0..1 opacity multiplier.
+	var direction: Vector2
+	var length: float
+	var strength: float # 0..1 opacity multiplier.
 
 @export_group("Sources")
 @export var receive_light_shadows: bool = true
 @export var receive_sun: bool = true
-## Max shadows from ShadowLights. The sun shadow is not counted.
 @export_range(0, 8) var max_shadows: int = 3
 
 @export_group("Visibility")
-## Hide the sprite itself but keep drawing its shadows
-## (e.g. off-screen trees, clouds, invisible ghosts).
 @export var shadow_only: bool = false:
 	set(value):
 		if shadow_only == value:
 			return
 		shadow_only = value
 		if not is_node_ready():
-			return # _ready() applies it.
+			return
 		if value:
 			self_modulate.a = 0.0
 		else:
@@ -46,7 +37,6 @@ class ShadowSource:
 
 @export_group("Shape")
 @export var style: ShadowStyle = ShadowStyle.ROTATE
-## Vertical squash for the ground plane. sin(40°) ≈ 0.64.
 @export_range(0.0, 1.0) var perspective_squash: float = 0.64
 ## Max shadow length as a multiple of sprite height.
 @export var max_length: float = 2.5

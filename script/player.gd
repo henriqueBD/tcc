@@ -17,7 +17,6 @@ func _physics_process(delta: float) -> void:
 		get_tree().quit()
 		return
 	
-	# Reads directional inputs (WASD / Arrow Keys by default)
 	var input_direction := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	
 	if input_direction != Vector2.ZERO:
