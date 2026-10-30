@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://gefwawbwuh6"]
+
+[ext_resource type="Texture2D" uid="uid://5suylcontvrk" path="res://asset/sprite/TX Props.png" id="1_3eak4"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_rdgns"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v82fg"]
+size = Vector2(78, 8)
+
+[node name="Fence" type="Node2D" unique_id=1485148087]
+
+[node name="SkewShadowSprite" type="Sprite2D" parent="." unique_id=560772424]
+position = Vector2(0, -13)
+texture = ExtResource("1_3eak4")
+region_enabled = true
+region_rect = Rect2(49, 277, 78, 26)
+script = ExtResource("2_rdgns")
+style = 1
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=617073578]
+position = Vector2(0, -3)
+shape = SubResource("RectangleShape2D_v82fg")

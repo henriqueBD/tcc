@@ -1,0 +1,16 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://ba8ei78e38mal"]
+
+[ext_resource type="Shader" uid="uid://dhaqhidcsoy4j" path="res://asset/shadow.gdshader" id="1_e1hcp"]
+
+[sub_resource type="Gradient" id="Gradient_w5776"]
+colors = PackedColorArray(0, 0, 0, 1, 0.43, 0.43, 0.43, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_pya7g"]
+gradient = SubResource("Gradient_w5776")
+
+[resource]
+shader = ExtResource("1_e1hcp")
+shader_parameter/color = Color(0, 0, 0, 1)
+shader_parameter/max_dist = 100.0
+shader_parameter/perspective_squash = 0.64
+shader_parameter/gradientTexture = SubResource("GradientTexture1D_pya7g")

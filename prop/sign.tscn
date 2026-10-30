@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://orvhpd4ym3wv"]
+
+[ext_resource type="Texture2D" uid="uid://5suylcontvrk" path="res://asset/sprite/TX Props.png" id="1_pjv41"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_qyets"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v82fg"]
+radius = 4.0
+
+[node name="Sign" type="Node2D" unique_id=2061595370]
+
+[node name="SkewShadowSprite" type="Sprite2D" parent="." unique_id=1890380353]
+position = Vector2(-15, -33)
+texture = ExtResource("1_pjv41")
+centered = false
+region_enabled = true
+region_rect = Rect2(96, 223, 27, 33)
+script = ExtResource("2_qyets")
+foot_inset = 3.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1650905477]
+position = Vector2(0, -2)
+shape = SubResource("CircleShape2D_v82fg")

@@ -1,0 +1,35 @@
+[gd_scene format=3 uid="uid://sv5m3q841p32"]
+
+[ext_resource type="Texture2D" uid="uid://1o84xp7fy401" path="res://asset/sprite/TX Plant.png" id="1_ppur2"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_lyaq1"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v82fg"]
+radius = 11.0
+
+[node name="Tree" type="Node2D" unique_id=422500688]
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1017137245]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=2136397052]
+shape = SubResource("CircleShape2D_v82fg")
+
+[node name="SpritePlayer" type="Sprite2D" parent="." unique_id=609597079]
+position = Vector2(-1, -39)
+texture = ExtResource("1_ppur2")
+region_enabled = true
+region_rect = Rect2(74, 290, 11, 89)
+script = ExtResource("2_lyaq1")
+receive_sun = false
+shadow_only = true
+foot_inset = 3.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="SpriteSun" type="Sprite2D" parent="." unique_id=55015338]
+position = Vector2(0, -64)
+texture = ExtResource("1_ppur2")
+region_enabled = true
+region_rect = Rect2(23, 13, 115, 142)
+script = ExtResource("2_lyaq1")
+receive_light_shadows = false
+foot_inset = 5.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"

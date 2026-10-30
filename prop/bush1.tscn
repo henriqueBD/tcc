@@ -1,0 +1,24 @@
+[gd_scene format=3 uid="uid://0xfke6yacofe"]
+
+[ext_resource type="Texture2D" uid="uid://1o84xp7fy401" path="res://asset/sprite/TX Plant.png" id="1_64qgi"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_jxpg2"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v82fg"]
+radius = 11.0
+
+[node name="Bush1" type="Node2D" unique_id=2043575414]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2144878297]
+texture = ExtResource("1_64qgi")
+region_enabled = true
+region_rect = Rect2(97, 194, 29, 27)
+script = ExtResource("2_jxpg2")
+style = 1
+foot_inset = 5.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1616826542]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=71284779]
+position = Vector2(0, 3)
+shape = SubResource("CircleShape2D_v82fg")

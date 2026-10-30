@@ -1,0 +1,26 @@
+[gd_scene format=3 uid="uid://b8m7q8c3dce52"]
+
+[ext_resource type="Texture2D" uid="uid://5suylcontvrk" path="res://asset/sprite/TX Props.png" id="1_qty7i"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_7pyw3"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_v82fg"]
+size = Vector2(36, 24)
+
+[node name="Statue" type="Node2D" unique_id=2111624049]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1493067629]
+texture = ExtResource("1_qty7i")
+region_enabled = true
+region_rect = Rect2(445, 21, 37, 72)
+script = ExtResource("2_7pyw3")
+max_length = 1.0
+foot_inset = 10.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1298143077]
+visible = false
+position = Vector2(0, 25)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=757483668]
+position = Vector2(0, -1)
+shape = SubResource("RectangleShape2D_v82fg")

@@ -1,0 +1,37 @@
+[gd_scene format=3 uid="uid://cuk1ha67k5dd2"]
+
+[ext_resource type="Texture2D" uid="uid://5suylcontvrk" path="res://asset/sprite/TX Props.png" id="1_g24qk"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_rjuvs"]
+[ext_resource type="Script" uid="uid://c741akvuluvvd" path="res://script/light.gd" id="3_1e2v5"]
+
+[sub_resource type="Gradient" id="Gradient_leprp"]
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 0)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_v82fg"]
+gradient = SubResource("Gradient_leprp")
+width = 160
+height = 160
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+metadata/_snap_enabled = true
+metadata/_snap_count = 2
+
+[node name="Torch" type="Node2D" unique_id=395198926]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=602444056]
+position = Vector2(-11, -41)
+texture = ExtResource("1_g24qk")
+centered = false
+region_enabled = true
+region_rect = Rect2(453, 113, 22, 41)
+script = ExtResource("2_rjuvs")
+foot_inset = 8.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="ShadowLight" type="PointLight2D" parent="." unique_id=1498544541]
+position = Vector2(0, -19)
+color = Color(1, 0.51666665, 0, 1)
+texture = SubResource("GradientTexture2D_v82fg")
+script = ExtResource("3_1e2v5")
+metadata/_custom_type_script = "uid://c741akvuluvvd"

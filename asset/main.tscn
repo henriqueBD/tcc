@@ -1,0 +1,44 @@
+[gd_scene format=3 uid="uid://dtnpde8v0r57g"]
+
+[ext_resource type="Script" uid="uid://cwhyj3joygm08" path="res://script/benchmark.gd" id="1_4g0sj"]
+[ext_resource type="PackedScene" uid="uid://bbcg04k24odhk" path="res://level/demo_limitations.tscn" id="3_5i2ag"]
+[ext_resource type="PackedScene" uid="uid://r4xskcffrol" path="res://prop/player.tscn" id="4_2q1mb"]
+[ext_resource type="Script" uid="uid://dxovusxc4oo8x" path="res://script/time_manager.gd" id="5_2q1mb"]
+
+[sub_resource type="Gradient" id="Gradient_v82fg"]
+offsets = PackedFloat32Array(0, 0.125, 0.29166666, 0.45833334, 0.625, 0.875, 1)
+colors = PackedColorArray(0.21960784, 0.23921569, 0.4509804, 1, 0.21960784, 0.23921569, 0.4509804, 1, 0.9490196, 0.6509804, 0.54901963, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0.21960784, 0.23921569, 0.4509804, 1, 0.21960784, 0.23921569, 0.4509804, 1)
+metadata/_snap_count = 24
+metadata/_snap_enabled = true
+
+[node name="Node2D" type="Node2D" unique_id=717282665]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1589388993]
+
+[node name="TimeManager" type="CanvasModulate" parent="." unique_id=2007653464]
+script = ExtResource("5_2q1mb")
+gradient = SubResource("Gradient_v82fg")
+day_length_seconds = 10.0
+metadata/_custom_type_script = "uid://dxovusxc4oo8x"
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1702293227]
+script = ExtResource("1_4g0sj")
+
+[node name="Label" type="Label" parent="CanvasLayer" unique_id=1384352220]
+offset_left = -230.0
+offset_top = -129.0
+offset_right = -94.0
+offset_bottom = -54.0
+theme_override_font_sizes/font_size = 12
+text = "[] - Parar o tempo
+[] - Avancar 1H
+[] - Retroceder 1H"
+
+[node name="Level" type="Node2D" parent="." unique_id=50584566]
+
+[node name="Demo" parent="Level" unique_id=382485575 instance=ExtResource("3_5i2ag")]
+
+[node name="Player" parent="." unique_id=554180674 node_paths=PackedStringArray("time_manager", "level") instance=ExtResource("4_2q1mb")]
+position = Vector2(4, 72)
+time_manager = NodePath("../TimeManager")
+level = NodePath("../Level")
