@@ -1,129 +1,301 @@
-class_name Benchmark
-extends CanvasLayer
+class_name ShadowBenchmark
+extends Node
+## Measures the cost of each part of the lighting system in the current scene.
+##
+## Put this node at the top of the scene you want to measure and run the game.
+## It switches between configurations, lets the day/night cycle run over the same
+## stretch of in-game time in every measurement, and prints the results to the
+## Output panel (or the terminal, in an exported build).
+##
+## Setup:
+## - Nodes that draw terrain shadows with shadow.gdshader -> group "bench_sdf".
+## - Extra LightOccluder2Ds used only for the native baseline -> group "bench_native".
+##
+## Runs automatically when `run_on_start` is on, or when the game is launched
+## with `-- --benchmark`.
 
-enum State { IDLE, WARMUP, RUNNING, DONE }
+const GROUP_NATIVE: StringName = &"bench_native"
+const CMD_FLAG: String = "--benchmark"
 
-@export var run: bool
-@export var warmup_time: float = 2.0
-@export var duration: float = 10.0
-@export var disable_vsync: bool = true
-@export var restart_key: Key = KEY_F5
 
-var _state: State = State.IDLE
-var _timer: float = 0.0
-var _last_tick_usec: int = 0
-var _frame_times_ms: PackedFloat32Array = PackedFloat32Array()
-var _original_vsync: DisplayServer.VSyncMode = DisplayServer.VSYNC_ENABLED
-var _label: Label
+class BenchConfig:
+	var name: String
+	var lighting: bool ## Light2Ds, sun and CanvasModulate.
+	var sun: bool      ## Sun shadows on SkewShadowSprites.
+	var lights: bool   ## ShadowLight shadows on SkewShadowSprites.
+	var sdf: bool      ## Terrain shadows (nodes in GROUP_SDF).
+	var native: bool   ## Godot's own LightOccluder2D shadows.
+
+	func _init(p_name: String, p_lighting: bool, p_sun: bool, p_lights: bool,
+			p_sdf: bool, p_native: bool) -> void:
+		name = p_name
+		lighting = p_lighting
+		sun = p_sun
+		lights = p_lights
+		sdf = p_sdf
+		native = p_native
+
+
+## Results of one measurement (one configuration, one repetition).
+class Run:
+	var frame_avg: float = 0.0
+	var frame_p99: float = 0.0
+	var cpu_avg: float = 0.0
+	var gpu_avg: float = 0.0
+
+
+@export var run_on_start: bool = false
+@export var quit_on_end: bool = false
+## Found automatically if left empty.
+
+@export_group("Protocol")
+## Seconds to wait after switching configuration (shader compilation, caches).
+@export var warmup_seconds: float = 3.0
+@export var sample_seconds: float = 15.0
+## Each repetition runs every configuration once, interleaved, to spread out thermal drift.
+@export_range(1, 10) var repetitions: int = 5
+## Adds a baseline using Godot's native LightOccluder2D shadows.
+@export var include_native: bool = true
+
+@export_group("Day cycle")
+## In-game hour at the start of every measurement.
+@export_range(0.0, 24.0) var start_hour: float = 9.0
+## In-game hour reached at the end of every measurement. The clock runs
+## from start_hour to end_hour during the sample, at the same speed every time.
+@export_range(0.0, 24.0) var end_hour: float = 15.0
+
+var time_manager: TimeManager
+var _casters: Array[SkewShadowSprite] = []
+var _lights: Array[Light2D] = []
+var _sdf_node: Polygon2D
+var _native_nodes: Array[CanvasItem] = []
+var _viewport_rid: RID
+## Config name -> Array of Run, in config order.
+var _results: Dictionary[String, Array] = {}
 
 
 func _ready() -> void:
-	if not run:
-		set_process_unhandled_input(false)
-		return
-	
-	print("Runing benchmark")
-	
-	layer = 100
-	process_mode = Node.PROCESS_MODE_ALWAYS
-
-	_label = Label.new()
-	_label.position = Vector2(10.0, 10.0)
-	_label.add_theme_color_override("font_color", Color.WHITE)
-	_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_label.add_theme_constant_override("outline_size", 4)
-	add_child(_label)
-
-	_original_vsync = DisplayServer.window_get_vsync_mode()
-
-	_label.text = "Press %s to start benchmark" % OS.get_keycode_string(restart_key)
+	if run_on_start or OS.get_cmdline_user_args().has(CMD_FLAG):
+		_run.call_deferred()
 
 
-func start() -> void:
+# ------------------------------------------------------------------------------
+
+func _run() -> void:
+	_prepare_engine()
+	_collect_nodes()
+	_print_header()
+
+	var configs: Array[BenchConfig] = _build_configs()
+	for config: BenchConfig in configs:
+		_results[config.name] = []
+
+	for rep: int in repetitions:
+		for config: BenchConfig in configs:
+			print("[bench] rep %d/%d  %s" % [rep + 1, repetitions, config.name])
+			_results[config.name].append(await _measure(config))
+
+	_print_results(configs)
+	if quit_on_end:
+		get_tree().quit()
+
+
+func _build_configs() -> Array[BenchConfig]:
+	var configs: Array[BenchConfig] = [
+		#               name                lighting sun    lights sdf    native
+		BenchConfig.new("sem_iluminacao",   false,   false, false, false, false),
+		BenchConfig.new("so_luzes",         true,    false, false, false, false),
+		BenchConfig.new("sombra_sol",       true,    true,  false, false, false),
+		BenchConfig.new("sombra_luzes",     true,    false, true,  false, false),
+		BenchConfig.new("sdf_terreno",      true,    false, false, true,  false),
+		BenchConfig.new("completo",         true,    true,  true,  true,  false),
+	]
+	if include_native:
+		configs.append(BenchConfig.new("nativo_occluder", true, false, false, false, true))
+	return configs
+
+
+func _measure(config: BenchConfig) -> Run:
+	_apply(config)
+
+	# Warm up with the clock stopped at the start hour.
+	if time_manager:
+		time_manager.paused = true
+		time_manager.set_time(start_hour)
+	await get_tree().create_timer(warmup_seconds).timeout
+
+	# Let the day run from start_hour to end_hour during the sample.
+	if time_manager:
+		time_manager.set_time(start_hour)
+		time_manager.time_scale = _time_scale_for_sample()
+		time_manager.paused = false
+
+	var frame_ms: PackedFloat64Array = PackedFloat64Array()
+	var cpu_total: float = 0.0
+	var gpu_total: float = 0.0
+
+	var last: int = Time.get_ticks_usec()
+	var end: int = last + int(sample_seconds * 1_000_000.0)
+	while last < end:
+		await get_tree().process_frame
+		var now: int = Time.get_ticks_usec()
+		frame_ms.append((now - last) / 1000.0)
+		cpu_total += Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0
+		gpu_total += RenderingServer.viewport_get_measured_render_time_gpu(_viewport_rid)
+		last = now
+
+	if time_manager:
+		time_manager.paused = true
+
+	var run: Run = Run.new()
+	var count: int = maxi(frame_ms.size(), 1)
+	var total: float = 0.0
+	for value: float in frame_ms:
+		total += value
+	run.frame_avg = total / count
+	run.frame_p99 = _percentile(frame_ms, 0.99)
+	run.cpu_avg = cpu_total / count
+	run.gpu_avg = gpu_total / count
+	return run
+
+
+## TimeManager.time_scale that moves the clock from start_hour to end_hour in sample_seconds.
+func _time_scale_for_sample() -> float:
+	var hours: float = fposmod(end_hour - start_hour, 24.0)
+	return hours * time_manager.day_length_seconds / (24.0 * sample_seconds)
+
+
+func _apply(config: BenchConfig) -> void:
+	for light: Light2D in _lights:
+		light.shadow_enabled = config.native
+
+	if time_manager:
+		time_manager.visible = config.lighting # Hidden CanvasModulate = full bright.
+		time_manager.sun_enabled = config.lighting
+
+	var any_shadow: bool = config.sun or config.lights
+	for sprite: SkewShadowSprite in _casters:
+		sprite.receive_sun = config.sun
+		sprite.receive_light_shadows = config.lights
+		sprite.set_shadows_active(any_shadow)
+
+	_sdf_node.visible = config.sdf
+	for item: CanvasItem in _native_nodes:
+		item.visible = config.native
+
+
+# ---------------- Setup ----------------
+
+func _prepare_engine() -> void:
+	DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
 	Engine.max_fps = 0
-	_frame_times_ms.clear()
-	_timer = 0.0
-	_last_tick_usec = Time.get_ticks_usec()
-	_state = State.WARMUP
-	if disable_vsync:
-		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED)
+	OS.low_processor_usage_mode = false
+	_viewport_rid = get_viewport().get_viewport_rid()
+	RenderingServer.viewport_set_measure_render_time(_viewport_rid, true)
 
 
-func _unhandled_input(event: InputEvent) -> void:
-	var key_event: InputEventKey = event as InputEventKey
-	if key_event and key_event.pressed and not key_event.echo and key_event.keycode == restart_key:
-		start()
+func _collect_nodes() -> void:
+	_casters.clear()
+	_lights.clear()
+	_walk(get_tree().current_scene)
+	_sdf_node = get_node("%SDF")
+	_native_nodes = _canvas_items_in(GROUP_NATIVE)
 
 
-func _process(_delta: float) -> void:
-	# Measure real elapsed time so Engine.time_scale doesn't skew results.
-	var now_usec: int = Time.get_ticks_usec()
-	var frame_ms: float = float(now_usec - _last_tick_usec) / 1000.0
-	_last_tick_usec = now_usec
-
-	match _state:
-		State.WARMUP:
-			_timer += frame_ms / 1000.0
-			_label.text = "Benchmark: warming up... %.1fs" % (warmup_time - _timer)
-			if _timer >= warmup_time:
-				_timer = 0.0
-				_state = State.RUNNING
-		State.RUNNING:
-			_timer += frame_ms / 1000.0
-			_frame_times_ms.append(frame_ms)
-			_label.text = "Benchmark: running %.1f / %.1fs\nFPS: %d" % [
-				_timer, duration, Engine.get_frames_per_second()
-			]
-			if _timer >= duration:
-				_finish()
+func _walk(node: Node) -> void:
+	if node is SkewShadowSprite:
+		_casters.append(node as SkewShadowSprite)
+	elif node is Light2D:
+		_lights.append(node as Light2D)
+	elif node is TimeManager and time_manager == null:
+		time_manager = node as TimeManager
+	for child: Node in node.get_children():
+		_walk(child)
 
 
-func _finish() -> void:
-	Engine.max_fps = 60
-	_state = State.DONE
-	if disable_vsync:
-		DisplayServer.window_set_vsync_mode(_original_vsync)
+func _canvas_items_in(group: StringName) -> Array[CanvasItem]:
+	var items: Array[CanvasItem] = []
+	for node: Node in get_tree().get_nodes_in_group(group):
+		var item: CanvasItem = node as CanvasItem
+		if item:
+			items.append(item)
+	return items
 
-	var count: int = _frame_times_ms.size()
-	if count == 0:
-		_label.text = "Benchmark: no frames recorded"
-		return
 
-	var sorted: PackedFloat32Array = _frame_times_ms.duplicate()
+# ---------------- Statistics ----------------
+
+static func _percentile(values: PackedFloat64Array, p: float) -> float:
+	if values.is_empty():
+		return 0.0
+	var sorted: PackedFloat64Array = values.duplicate()
 	sorted.sort()
+	var index: int = clampi(ceili(p * sorted.size()) - 1, 0, sorted.size() - 1)
+	return sorted[index]
 
-	var total_ms: float = 0.0
-	for t: float in sorted:
-		total_ms += t
 
-	var avg_ms: float = total_ms / float(count)
-	var median_ms: float = sorted[count / 2]
-	var min_ms: float = sorted[0]
-	var max_ms: float = sorted[count - 1]
+static func _mean(values: PackedFloat64Array) -> float:
+	var total: float = 0.0
+	for value: float in values:
+		total += value
+	return total / maxi(values.size(), 1)
 
-	# 1% low: average FPS of the slowest 1% of frames.
-	var low_count: int = maxi(1, int(float(count) * 0.01))
-	var low_total_ms: float = 0.0
-	for i: int in range(count - low_count, count):
-		low_total_ms += sorted[i]
-	var one_percent_low_fps: float = 1000.0 / (low_total_ms / float(low_count))
 
-	var draw_calls: int = int(Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME))
-	var node_count: int = int(Performance.get_monitor(Performance.OBJECT_NODE_COUNT))
-	var static_mem_mb: float = Performance.get_monitor(Performance.MEMORY_STATIC) / 1048576.0
+## Sample standard deviation (n - 1).
+static func _std(values: PackedFloat64Array) -> float:
+	if values.size() < 2:
+		return 0.0
+	var mean: float = _mean(values)
+	var sq: float = 0.0
+	for value: float in values:
+		sq += (value - mean) * (value - mean)
+	return sqrt(sq / (values.size() - 1))
 
-	var report: String = "\n".join([
-		"Results",
-		"Frames:        %d over %.1fs" % [count, total_ms / 1000.0],
-		"Average FPS:   %.1f" % (1000.0 / avg_ms),
-		"1%% Low FPS:    %.1f" % one_percent_low_fps,
-		"Frame time:    avg %.2f ms | median %.2f ms" % [avg_ms, median_ms],
-		"               min %.2f ms | max %.2f ms" % [min_ms, max_ms],
-		"Draw calls:    %d" % draw_calls,
-		"Nodes:         %d" % node_count,
-		"Static memory: %.1f MB" % static_mem_mb,
-		"Press %s to run again" % OS.get_keycode_string(restart_key),
-	])
-	
-	_label.text = report
-	print(report)
+
+# ---------------- Output ----------------
+
+func _print_header() -> void:
+	print("")
+	print("=== ShadowBenchmark ===")
+	print("Cena: %s" % get_tree().current_scene.scene_file_path)
+	print("Godot: %s | Renderizador: %s" % [Engine.get_version_info()["string"],
+		ProjectSettings.get_setting("rendering/renderer/rendering_method")])
+	print("CPU: %s (%d threads)" % [OS.get_processor_name(), OS.get_processor_count()])
+	print("GPU: %s | Driver: %s" % [RenderingServer.get_video_adapter_name(),
+		", ".join(OS.get_video_adapter_driver_info())])
+	print("SO: %s %s | Janela: %s | Build de depuração: %s" % [OS.get_name(), OS.get_version(),
+		DisplayServer.window_get_size(), OS.is_debug_build()])
+	print("Objetos com sombra: %d | Luzes: %d" % [_casters.size(), _lights.size()])
+	print("Protocolo: %.0f s aquecimento, %.0f s amostra, %d repetições, relógio %s h -> %s h" % [
+		warmup_seconds, sample_seconds, repetitions, start_hour, end_hour])
+	print("")
+
+
+func _print_results(configs: Array[BenchConfig]) -> void:
+	var base: float = _mean(_column(configs[0].name, "frame_avg"))
+	print("")
+	print("=== Resultados (média ± desvio-padrão entre repetições, em ms) ===")
+	print("%-18s %16s %10s %10s %10s %10s %12s" % [
+		"Configuração", "Quadro", "p99", "1% low", "CPU", "GPU", "Custo extra"])
+	for config: BenchConfig in configs:
+		var frame: PackedFloat64Array = _column(config.name, "frame_avg")
+		var p99: float = _mean(_column(config.name, "frame_p99"))
+		var frame_mean: float = _mean(frame)
+		print("%-18s %8.3f ± %5.3f %10.3f %7.1f fps %10.3f %10.3f %+12.3f" % [
+			config.name,
+			frame_mean, _std(frame),
+			p99,
+			1000.0 / maxf(p99, 0.001),
+			_mean(_column(config.name, "cpu_avg")),
+			_mean(_column(config.name, "gpu_avg")),
+			frame_mean - base,
+		])
+	print("")
+	print("Custo extra = quadro médio da configuração − quadro médio de %s." % configs[0].name)
+	print("Critério RNF01: quadro médio de 'completo' <= 16,667 ms (60 FPS).")
+
+
+func _column(config_name: String, field: String) -> PackedFloat64Array:
+	var values: PackedFloat64Array = PackedFloat64Array()
+	for run: Run in _results[config_name]:
+		values.append(run.get(field))
+	return values

@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://ck1jq44eyptk"]
+
+[ext_resource type="Texture2D" uid="uid://5suylcontvrk" path="res://asset/sprite/TX Props.png" id="1_0nh70"]
+[ext_resource type="Script" uid="uid://bv276acku2wqf" path="res://script/shadow.gd" id="2_ywxjg"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_v82fg"]
+radius = 6.0
+
+[node name="Bush1" type="Node2D" unique_id=2043575414]
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=2144878297]
+texture = ExtResource("1_0nh70")
+region_enabled = true
+region_rect = Rect2(10, 492, 11, 10)
+script = ExtResource("2_ywxjg")
+style = 1
+foot_inset = 5.0
+metadata/_custom_type_script = "uid://bv276acku2wqf"
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=1616826542]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=71284779]
+shape = SubResource("CircleShape2D_v82fg")

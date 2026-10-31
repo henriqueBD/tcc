@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dtnpde8v0r57g"]
 
 [ext_resource type="Script" uid="uid://cwhyj3joygm08" path="res://script/benchmark.gd" id="1_4g0sj"]
-[ext_resource type="PackedScene" uid="uid://bbcg04k24odhk" path="res://level/demo_limitations.tscn" id="3_5i2ag"]
+[ext_resource type="PackedScene" uid="uid://kj5sb3e1ttry" path="res://level/demo_stress.tscn" id="3_5i2ag"]
 [ext_resource type="PackedScene" uid="uid://r4xskcffrol" path="res://prop/player.tscn" id="4_2q1mb"]
 [ext_resource type="Script" uid="uid://dxovusxc4oo8x" path="res://script/time_manager.gd" id="5_2q1mb"]
 
@@ -22,6 +22,7 @@ day_length_seconds = 10.0
 metadata/_custom_type_script = "uid://dxovusxc4oo8x"
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1702293227]
+visible = false
 script = ExtResource("1_4g0sj")
 
 [node name="Label" type="Label" parent="CanvasLayer" unique_id=1384352220]

@@ -1,6 +1,7 @@
 [gd_scene format=4 uid="uid://dn2kia7y6hvw"]
 
 [ext_resource type="TileSet" uid="uid://bbggkfwnlmb4j" path="res://asset/new_tile_set.tres" id="1_ltfh8"]
+[ext_resource type="Script" uid="uid://cwhyj3joygm08" path="res://script/benchmark.gd" id="1_wiwr6"]
 [ext_resource type="PackedScene" uid="uid://0xfke6yacofe" path="res://prop/bush1.tscn" id="2_wiwr6"]
 [ext_resource type="PackedScene" uid="uid://sv5m3q841p32" path="res://prop/tree1.tscn" id="3_xn1ks"]
 [ext_resource type="PackedScene" uid="uid://b8m7q8c3dce52" path="res://prop/statue.tscn" id="4_lkumu"]
@@ -14,6 +15,12 @@ polygon = PackedVector2Array(-318, -144, -317, -1, -51, -1, -49, -145)
 size = Vector2(270, 180)
 
 [node name="Demo" type="Node2D" unique_id=382485575]
+script = ExtResource("1_wiwr6")
+run_on_start = true
+warmup_seconds = 1.0
+sample_seconds = 3.0
+repetitions = 1
+include_native = false
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=1646964682]
 z_index = -2
@@ -78,7 +85,8 @@ position = Vector2(464, 225)
 occluder = SubResource("OccluderPolygon2D_waf0q")
 occluder_light_mask = 0
 
-[node name="Polygon2D" type="Polygon2D" parent="Occluders" unique_id=1798897999]
+[node name="SDF" type="Polygon2D" parent="Occluders" unique_id=1798897999]
+unique_name_in_owner = true
 material = ExtResource("6_upn1a")
 polygon = PackedVector2Array(-329, -183, -327, 153, 364, 159, 375, -187)
 uv = PackedVector2Array(-290.5, 194, -353.5, 398, 0.5, 383, -31.5, 187)

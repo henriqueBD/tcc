@@ -37,7 +37,7 @@ func _physics_process(delta: float) -> void:
 		velocity = velocity.move_toward(Vector2.ZERO, friction * delta)
 	
 	if Input.is_action_just_pressed("ui_accept"):
-		_shadow_light.toggle_enable(_shadow_light.cast_shadows)
+		_shadow_light.toggle_enable(not _shadow_light.cast_shadows)
 	
 	if Input.is_action_just_pressed("ui_focus_next"):
 		time_manager.paused = not time_manager.paused
@@ -50,7 +50,7 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("toggle_sombra"):
 		_shadows_active = not _shadows_active
 		for sprite_shadow: SkewShadowSprite in get_tree().get_nodes_in_group("Shadows"):
-			sprite_shadow.toggle_disable(_shadows_active)
+			sprite_shadow.set_shadows_active(_shadows_active)
 		(level.get_child(0).get_node("%Occluders") as Node2D).visible = _shadows_active
 	
 	move_and_slide()

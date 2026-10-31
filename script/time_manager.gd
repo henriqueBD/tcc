@@ -15,7 +15,6 @@ extends CanvasModulate
 
 @export_group("Sun")
 ## Master switch for sun shadows (turn off indoors / in caves).
-@export var sun_light: DirectionalLight2D
 @export var sun_enabled: bool = true
 @export_range(0.0, 24.0) var sunrise_hour: float = 6.0
 @export_range(0.0, 24.0) var sunset_hour: float = 18.0
@@ -28,24 +27,35 @@ extends CanvasModulate
 @export_range(0.01, 1.0) var horizon_fade: float = 0.25
 ## Rotates the sun's path. 0 = shadows sweep west → north → east.
 @export_range(-180.0, 180.0) var sun_path_rotation_degrees: float = 0.0
+## Sprite shadows only update after the sun turns this much. Lower is smoother,
+## higher is cheaper. 0 updates whenever anything changes.
+@export_range(0.0, 5.0) var sun_update_degrees: float = 0.25
 
 var hour: float = 0.0
 
-# Read by SkewShadowSprite every frame.
+## Smallest change in shadow length (sprite heights) or strength that updates shadows.
+const SUN_LENGTH_STEP: float = 0.01
+const SUN_STRENGTH_STEP: float = 0.005
+
+# Read by SkewShadowSprite when it updates. Only change when the change is visible.
+static var current_manager: TimeManager
 static var sun_direction: Vector2 = Vector2.UP
 static var sun_length: float = 0.0
 static var sun_strength: float = 0.0
 
 var _last_whole_hour: int = -1
 var _was_day: bool = false
+## The statics outlive this node, so the first update always publishes.
+var _sun_force_publish: bool = true
 
+func _enter_tree() -> void:
+	current_manager = self
 
 func _ready() -> void:
 	hour = fposmod(start_hour, 24.0)
 	_last_whole_hour = int(hour)
 	_was_day = is_day()
 	_update_sun()
-
 
 func _process(delta: float) -> void:
 	if not paused and day_length_seconds > 0.0:
@@ -58,25 +68,13 @@ func _process(delta: float) -> void:
 
 # ---------------- Public API ----------------
 
-## Jumps to the middle of the day (day = true) or the middle of the night (day = false).
-func toggle_day_night(day: bool) -> void:
-	var day_length: float = sunset_hour - sunrise_hour
-	if day:
-		set_time(sunrise_hour + day_length * 0.5)
-	else:
-		var night_length: float = 24.0 - day_length
-		set_time(sunset_hour + night_length * 0.5)
-
-
-## Shifts the clock by a whole number of hours. Negative values go backwards.
-func offset_hour(offset: int) -> void:
-	set_time(hour + float(offset))
-
 func set_time(new_hour: float) -> void:
 	hour = fposmod(new_hour, 24.0)
 	_check_transitions()
 	_update_sun()
 
+func offset_hour(offset: int) -> void:
+	set_time(hour + offset)
 
 func is_day() -> bool:
 	return hour >= sunrise_hour and hour < sunset_hour
@@ -113,29 +111,39 @@ func _check_transitions() -> void:
 
 
 func _update_sun() -> void:
+	var direction: Vector2 = sun_direction
+	var length: float = sun_length
+	var strength: float = 0.0
+
 	var progress: float = inverse_lerp(sunrise_hour, sunset_hour, hour)
-	
-	# Handle Night / Sun disabled
-	if not sun_enabled or progress <= 0.0 or progress >= 1.0:
-		sun_strength = 0.0
-		if sun_light:
-			sun_light.enabled = false
-			sun_light.energy = 0.0
+	if sun_enabled and progress > 0.0 and progress < 1.0:
+		# 0 at the horizon, 1 at noon.
+		var elevation: float = sin(progress * PI)
+		# Sun rises east, so shadows start pointing west (PI), pass north (3PI/2), end east (TAU).
+		direction = Vector2.from_angle(lerpf(PI, TAU, progress) + deg_to_rad(sun_path_rotation_degrees))
+		length = lerpf(horizon_shadow_length, noon_shadow_length, elevation)
+		strength = max_sun_strength * smoothstep(0.0, horizon_fade, elevation)
+
+	if not _sun_changed_enough(direction, length, strength):
 		return
 
-	# Handle Day
-	# 0 at the horizon, 1 at noon.
-	var elevation: float = sin(progress * PI)
-	# Sun rises east, so shadows start pointing west (PI), pass north (3PI/2), end east (TAU).
-	sun_direction = Vector2.from_angle(lerpf(PI, TAU, progress) + deg_to_rad(sun_path_rotation_degrees))
-	RenderingServer.global_shader_parameter_set("sun_direction", sun_direction)
-	sun_length = lerpf(horizon_shadow_length, noon_shadow_length, elevation)
-	sun_strength = max_sun_strength * smoothstep(0.0, horizon_fade, elevation)
-	RenderingServer.global_shader_parameter_set("sun_strength", sun_strength)
-	
-	# Apply to DirectionalLight2D
-	if sun_light:
-		sun_light.enabled = true
-		sun_light.energy = sun_strength
-		# The rotation of the DirectionalLight2D dictates the direction the shadow is cast
-		sun_light.rotation = sun_direction.angle()
+	sun_direction = direction
+	sun_length = length
+	sun_strength = strength
+	# Terrain (shadow.gdshader) and sprite shadows step together, so they always match.
+	RenderingServer.global_shader_parameter_set("sun_direction", direction)
+	RenderingServer.global_shader_parameter_set("sun_strength", strength)
+	SkewShadowSprite.mark_all_sun_dirty()
+
+
+func _sun_changed_enough(direction: Vector2, length: float, strength: float) -> bool:
+	if _sun_force_publish:
+		_sun_force_publish = false
+		return true
+	if (strength > 0.0) != (sun_strength > 0.0):
+		return true # Sunrise, sunset, or sun switched on/off.
+	if strength == 0.0:
+		return false # Night: nothing to show.
+	return absf(strength - sun_strength) > SUN_STRENGTH_STEP \
+		or absf(length - sun_length) > SUN_LENGTH_STEP \
+		or absf(direction.angle_to(sun_direction)) > deg_to_rad(sun_update_degrees)

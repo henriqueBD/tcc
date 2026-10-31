@@ -1,14 +1,17 @@
 [gd_scene format=4 uid="uid://bbcg04k24odhk"]
 
+[ext_resource type="Script" uid="uid://cwhyj3joygm08" path="res://script/benchmark.gd" id="1_l3iq2"]
 [ext_resource type="TileSet" uid="uid://bbggkfwnlmb4j" path="res://asset/new_tile_set.tres" id="1_tafvs"]
 [ext_resource type="PackedScene" uid="uid://0xfke6yacofe" path="res://prop/bush1.tscn" id="2_l3iq2"]
 [ext_resource type="PackedScene" uid="uid://sv5m3q841p32" path="res://prop/tree1.tscn" id="3_54g6c"]
 [ext_resource type="Material" uid="uid://ba8ei78e38mal" path="res://asset/shadow.tres" id="4_ogsba"]
+[ext_resource type="PackedScene" uid="uid://gefwawbwuh6" path="res://prop/fence.tscn" id="6_54g6c"]
 
 [sub_resource type="OccluderPolygon2D" id="OccluderPolygon2D_waf0q"]
 polygon = PackedVector2Array(-318, -144, -317, -1, -51, -1, -49, -145)
 
 [node name="Demo" type="Node2D" unique_id=382485575]
+script = ExtResource("1_l3iq2")
 
 [node name="Occluders" type="Node2D" parent="." unique_id=475937943]
 unique_name_in_owner = true
@@ -37,10 +40,19 @@ tile_set = ExtResource("1_tafvs")
 y_sort_enabled = true
 
 [node name="Bush4" parent="Objects" unique_id=2073807901 instance=ExtResource("2_l3iq2")]
-position = Vector2(-65, 122)
+position = Vector2(-115, 109)
 
 [node name="Bush7" parent="Objects" unique_id=373823182 instance=ExtResource("2_l3iq2")]
-position = Vector2(106, -11)
+position = Vector2(125, -37)
 
 [node name="Tree7" parent="Objects" unique_id=701756194 instance=ExtResource("3_54g6c")]
 position = Vector2(-79, -89)
+
+[node name="Tree8" parent="Objects" unique_id=422500688 instance=ExtResource("3_54g6c")]
+position = Vector2(71, 0)
+
+[node name="Tree9" parent="Objects" unique_id=198198076 instance=ExtResource("3_54g6c")]
+position = Vector2(-172, 20)
+
+[node name="Fence" parent="Objects" unique_id=1485148087 instance=ExtResource("6_54g6c")]
+position = Vector2(-148, 93)

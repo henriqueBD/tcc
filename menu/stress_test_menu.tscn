@@ -1,0 +1,117 @@
+[gd_scene format=3 uid="uid://cnd0ni8ho5wyv"]
+
+[ext_resource type="Script" uid="uid://bkkog1xvtgorb" path="res://menu/strees_menu.gd" id="1_s5uvd"]
+
+[node name="Menu" type="Control" unique_id=1978581385]
+layout_mode = 3
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_s5uvd")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=793547086]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -27.0
+offset_top = -20.0
+offset_right = 27.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="VBoxContainer" unique_id=1143518735]
+layout_mode = 2
+text = "Selecione as configuracoes:"
+horizontal_alignment = 1
+
+[node name="Control" type="Control" parent="VBoxContainer" unique_id=1079556131]
+custom_minimum_size = Vector2(0, 15.62)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=1598634029]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=386235392]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1570505069]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Num. de objetos:"
+
+[node name="Control" type="Control" parent="VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1926359226]
+custom_minimum_size = Vector2(0, 10.995)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer" unique_id=241820478]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1598280174]
+layout_mode = 2
+
+[node name="AddObj" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1196885712]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "+ 10"
+
+[node name="SubObj" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=177726620]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "- 10"
+
+[node name="Control" type="Control" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1413630580]
+custom_minimum_size = Vector2(14.065, 0)
+layout_mode = 2
+
+[node name="ObjNum" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1857414421]
+unique_name_in_owner = true
+layout_mode = 2
+text = "0"
+
+[node name="Control" type="Control" parent="VBoxContainer/HBoxContainer" unique_id=73057751]
+custom_minimum_size = Vector2(91.005, 0)
+layout_mode = 2
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=688358961]
+layout_mode = 2
+
+[node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=13432199]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "Num. de luzes"
+
+[node name="Control" type="Control" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=2084898519]
+layout_mode = 2
+
+[node name="1Luz" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=1077531108]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "1"
+
+[node name="16Luz" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=1881721896]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "16"
+
+[node name="Control2" type="Control" parent="VBoxContainer" unique_id=1620627548]
+custom_minimum_size = Vector2(0, 17.315)
+layout_mode = 2
+
+[node name="Iniciar" type="Button" parent="VBoxContainer" unique_id=1585985257]
+unique_name_in_owner = true
+custom_maximum_size = Vector2(76.695, -1)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Iniciar:"
