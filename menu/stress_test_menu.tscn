@@ -29,7 +29,7 @@ grow_vertical = 2
 
 [node name="Label" type="Label" parent="VBoxContainer" unique_id=1143518735]
 layout_mode = 2
-text = "Selecione as configuracoes:"
+text = "Selecione as configurações:"
 horizontal_alignment = 1
 
 [node name="Control" type="Control" parent="VBoxContainer" unique_id=1079556131]
@@ -114,4 +114,4 @@ unique_name_in_owner = true
 custom_maximum_size = Vector2(76.695, -1)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Iniciar:"
+text = "Iniciar"

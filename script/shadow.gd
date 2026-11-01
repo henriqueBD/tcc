@@ -18,7 +18,7 @@ enum ShadowStyle {
 
 const LIGHT_ONLY: Material = preload("uid://ddwegu1bf4g7c")
 const SHADOW_COLOR: Color = Color(0.0, 0.0, 0.0, 0.4)
-const SHADOW_Z_OFFSET: int = 0
+const SHADOW_Z_OFFSET: int = -1
 const MIN_STRENGTH: float = 0.01
 const SHORT_SHADOW_FADE: float = 0.3
 

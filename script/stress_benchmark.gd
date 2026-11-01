@@ -1,3 +1,4 @@
+class_name StressTestBenchmark
 extends ShadowBenchmark
 
 const OBJ_1: PackedScene = preload("uid://ck1jq44eyptk") # 12 x 12
