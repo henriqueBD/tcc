@@ -50,3 +50,22 @@ unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 8
 text = "Teste de stresse"
+
+[node name="Control" type="Control" parent="VBoxContainer" unique_id=448151704]
+custom_minimum_size = Vector2(0, 16.195)
+layout_mode = 2
+
+[node name="SpanwPlayer" type="CheckButton" parent="VBoxContainer" unique_id=567715017]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 8
+button_pressed = true
+text = "Colocar jogador"
+
+[node name="Benchmark" type="CheckButton" parent="VBoxContainer" unique_id=1165655917]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 8
+text = "Executar Benchmark"

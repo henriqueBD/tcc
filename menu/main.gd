@@ -9,12 +9,20 @@ func _ready() -> void:
 	menu.level_selected.connect(_start, CONNECT_ONE_SHOT)
 	menu.menu_changed.connect(_change_menu, CONNECT_ONE_SHOT)
 
-func _start(level: Node) -> void:
+func _start(level: Node, spawn_player: bool, run_benchmark: bool) -> void:
 	menu.queue_free()
+	
+	(level as ShadowBenchmark).run_on_start = run_benchmark
 	%Level.add_child(level)
+	
 	var player: CharacterBody2D = %Player
-	player.show()
-	player.process_mode = Node.PROCESS_MODE_INHERIT
+	
+	if spawn_player:
+		player.show()
+		player.process_mode = Node.PROCESS_MODE_INHERIT
+	else:
+		player.queue_free()
+	
 	$TimeManager.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _change_menu() -> void:

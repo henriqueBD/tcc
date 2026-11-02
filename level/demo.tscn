@@ -19,7 +19,6 @@ script = ExtResource("1_wiwr6")
 warmup_seconds = 1.0
 sample_seconds = 3.0
 repetitions = 1
-include_native = false
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=1646964682]
 z_index = -2

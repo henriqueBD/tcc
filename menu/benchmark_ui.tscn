@@ -1,0 +1,25 @@
+[gd_scene format=3 uid="uid://bc14jfg3yuu8t"]
+
+[ext_resource type="Theme" uid="uid://crm2yignw8chy" path="res://menu/menu_theme.tres" id="1_l0u23"]
+
+[node name="BenchmarkUi" type="CanvasLayer" unique_id=1121060727]
+
+[node name="Control" type="VBoxContainer" parent="." unique_id=1391094372]
+offset_left = 5.0
+offset_top = 5.0
+offset_right = 45.0
+offset_bottom = 45.0
+
+[node name="FPS" type="Label" parent="Control" unique_id=1498418044]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("1_l0u23")
+theme_override_font_sizes/font_size = 8
+text = "FPS: "
+
+[node name="Info" type="Label" parent="Control" unique_id=1528783065]
+unique_name_in_owner = true
+layout_mode = 2
+theme = ExtResource("1_l0u23")
+theme_override_font_sizes/font_size = 8
+text = "Info"

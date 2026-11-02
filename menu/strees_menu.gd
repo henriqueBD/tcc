@@ -34,4 +34,4 @@ func _iniciar_press() -> void:
 	var demo_stress: StressTestBenchmark = DEMO_STRESS.instantiate()
 	demo_stress.num_lights = _16_light
 	demo_stress.num_objects = _obj_num
-	level_selected.emit(demo_stress)
+	level_selected.emit(demo_stress, false, true)

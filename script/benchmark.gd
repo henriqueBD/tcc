@@ -14,8 +14,10 @@ extends Node
 ## Runs automatically when `run_on_start` is on, or when the game is launched
 ## with `-- --benchmark`.
 
+const BENCHMARK_UI = preload("uid://bc14jfg3yuu8t")
+
 const GROUP_NATIVE: StringName = &"bench_native"
-const CMD_FLAG: String = "--benchmark"
+const output_dir: String = "user://benchmarks"
 
 
 class BenchConfig:
@@ -73,11 +75,31 @@ var _viewport_rid: RID
 ## Config name -> Array of Run, in config order.
 var _results: Dictionary[String, Array] = {}
 
+var _fps_update_counter: int
+var _fps_label: Label
+var _info_label: Label
+
+var _output: String
 
 func _ready() -> void:
-	if run_on_start or OS.get_cmdline_user_args().has(CMD_FLAG):
-		_run.call_deferred()
+	set_process(run_on_start)
+	
+	if not run_on_start:
+		return
+	
+	var ui: Node = BENCHMARK_UI.instantiate()
+	_fps_label = ui.get_node("%FPS")
+	_info_label = ui.get_node("%Info")
+	add_child(ui)
+	
+	
+	_run.call_deferred()
 
+func _process(_delta: float) -> void:
+	if _fps_update_counter == 0:
+		_fps_update_counter = 5
+		_fps_label.text = "FPS: " + str(Engine.get_frames_per_second())
+	_fps_update_counter -= 1
 
 # ------------------------------------------------------------------------------
 
@@ -92,10 +114,19 @@ func _run() -> void:
 
 	for rep: int in repetitions:
 		for config: BenchConfig in configs:
-			print("[bench] rep %d/%d  %s" % [rep + 1, repetitions, config.name])
+			_info_label.text = "[bench] rep %d/%d  %s" % [rep + 1, repetitions, config.name]
+			print(_info_label.text)
 			_results[config.name].append(await _measure(config))
 
 	_print_results(configs)
+
+	var saved_path: String = _save_results(configs)
+	if saved_path.is_empty():
+		_info_label.text = "Benchmark completo, mas falhou ao salvar os resultados (veja o Output)."
+	else:
+		_info_label.text = "Benchmark completo, resultados salvos em: %s" % saved_path
+		print("[bench] Resultados salvos em: %s" % saved_path)
+
 	if quit_on_end:
 		get_tree().quit()
 
@@ -254,33 +285,34 @@ static func _std(values: PackedFloat64Array) -> float:
 # ---------------- Output ----------------
 
 func _print_header() -> void:
-	print("")
-	print("=== ShadowBenchmark ===")
-	print("Cena: %s" % get_tree().current_scene.scene_file_path)
-	print("Godot: %s | Renderizador: %s" % [Engine.get_version_info()["string"],
+	_write_line("")
+	_write_line("=== ShadowBenchmark ===")
+	_write_line("Cena: %s" % get_tree().current_scene.scene_file_path)
+	_write_line("Godot: %s | Renderizador: %s" % [Engine.get_version_info()["string"],
 		ProjectSettings.get_setting("rendering/renderer/rendering_method")])
-	print("CPU: %s (%d threads)" % [OS.get_processor_name(), OS.get_processor_count()])
-	print("GPU: %s | Driver: %s" % [RenderingServer.get_video_adapter_name(),
+	_write_line("CPU: %s (%d threads)" % [OS.get_processor_name(), OS.get_processor_count()])
+	_write_line("GPU: %s | Driver: %s" % [RenderingServer.get_video_adapter_name(),
 		", ".join(OS.get_video_adapter_driver_info())])
-	print("SO: %s %s | Janela: %s | Build de depuração: %s" % [OS.get_name(), OS.get_version(),
+	_write_line("SO: %s %s | Janela: %s | Build de depuração: %s" % [OS.get_name(), OS.get_version(),
 		DisplayServer.window_get_size(), OS.is_debug_build()])
-	print("Objetos com sombra: %d | Luzes: %d" % [_casters.size(), _lights.size()])
-	print("Protocolo: %.0f s aquecimento, %.0f s amostra, %d repetições, relógio %s h -> %s h" % [
+	_write_line("Objetos com sombra: %d | Luzes: %d" % [_casters.size(), _lights.size()])
+	_write_line("Protocolo: %.0f s aquecimento, %.0f s amostra, %d repetições, relógio %s h -> %s h" % [
 		warmup_seconds, sample_seconds, repetitions, start_hour, end_hour])
-	print("")
+	_write_line("")
 
 
 func _print_results(configs: Array[BenchConfig]) -> void:
+	_info_label.text = "Benchmark completo, resultados salvos em: "
 	var base: float = _mean(_column(configs[0].name, "frame_avg"))
-	print("")
-	print("=== Resultados (média ± desvio-padrão entre repetições, em ms) ===")
-	print("%-18s %16s %10s %10s %10s %10s %12s" % [
+	_write_line("")
+	_write_line("=== Resultados (média ± desvio-padrão entre repetições, em ms) ===")
+	_write_line("%-18s %16s %10s %10s %10s %10s %12s" % [
 		"Configuração", "Quadro", "p99", "1% low", "CPU", "GPU", "Custo extra"])
 	for config: BenchConfig in configs:
 		var frame: PackedFloat64Array = _column(config.name, "frame_avg")
 		var p99: float = _mean(_column(config.name, "frame_p99"))
 		var frame_mean: float = _mean(frame)
-		print("%-18s %8.3f ± %5.3f %10.3f %7.1f fps %10.3f %10.3f %+12.3f" % [
+		_write_line("%-18s %8.3f ± %5.3f %10.3f %7.1f fps %10.3f %10.3f %+12.3f" % [
 			config.name,
 			frame_mean, _std(frame),
 			p99,
@@ -289,13 +321,49 @@ func _print_results(configs: Array[BenchConfig]) -> void:
 			_mean(_column(config.name, "gpu_avg")),
 			frame_mean - base,
 		])
-	print("")
-	print("Custo extra = quadro médio da configuração − quadro médio de %s." % configs[0].name)
-	print("Critério RNF01: quadro médio de 'completo' <= 16,667 ms (60 FPS).")
+	_write_line("")
+	_write_line("Custo extra = quadro médio da configuração − quadro médio de %s." % configs[0].name)
+	_write_line("Critério RNF01: quadro médio de 'completo' <= 16,667 ms (60 FPS).")
 
+func _write_line(line: String) -> void:
+	print(line)
+	_output += "\n" + line
 
 func _column(config_name: String, field: String) -> PackedFloat64Array:
 	var values: PackedFloat64Array = PackedFloat64Array()
 	for run: Run in _results[config_name]:
 		values.append(run.get(field))
 	return values
+
+# ---------------- Saving ----------------
+
+## Writes the report (.txt) and, optionally, the raw data (.csv).
+## Returns the absolute path of the report, or "" on failure.
+func _save_results(configs: Array[BenchConfig]) -> String:
+	var dir_error: Error = DirAccess.make_dir_recursive_absolute(output_dir)
+	if dir_error != OK:
+		push_error("[bench] Não foi possível criar '%s': %s" % [output_dir, error_string(dir_error)])
+		return ""
+
+	# "2026-11-01 20:46:00" -> "2026-11-01_20-46-00" (':' is not allowed on Windows).
+	var stamp: String = Time.get_datetime_string_from_system(false, true) \
+			.replace(":", "-").replace(" ", "_")
+	var scene_name: String = get_tree().current_scene.scene_file_path.get_file().get_basename()
+	var base_path: String = output_dir.path_join("bench_%s_%s" % [scene_name, stamp])
+
+	var txt_path: String = base_path + ".txt"
+	var txt_error: Error = _save_text(txt_path, _output.trim_prefix("\n") + "\n")
+	if txt_error != OK:
+		push_error("[bench] Não foi possível salvar '%s': %s" % [txt_path, error_string(txt_error)])
+		return ""
+	
+	return ProjectSettings.globalize_path(txt_path)
+
+
+func _save_text(path: String, text: String) -> Error:
+	var file: FileAccess = FileAccess.open(path, FileAccess.WRITE)
+	if file == null:
+		return FileAccess.get_open_error()
+	file.store_string(text)
+	file.close()
+	return OK

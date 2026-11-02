@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://cnd0ni8ho5wyv"]
 
+[ext_resource type="Theme" uid="uid://crm2yignw8chy" path="res://menu/menu_theme.tres" id="1_80nd5"]
 [ext_resource type="Script" uid="uid://bkkog1xvtgorb" path="res://menu/strees_menu.gd" id="1_s5uvd"]
 
 [node name="Menu" type="Control" unique_id=1978581385]
@@ -11,6 +12,7 @@ anchor_right = 0.5
 anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
+theme = ExtResource("1_80nd5")
 script = ExtResource("1_s5uvd")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=793547086]
@@ -33,7 +35,7 @@ text = "Selecione as configurações:"
 horizontal_alignment = 1
 
 [node name="Control" type="Control" parent="VBoxContainer" unique_id=1079556131]
-custom_minimum_size = Vector2(0, 15.62)
+custom_minimum_size = Vector2(0, 28.02)
 layout_mode = 2
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer" unique_id=1598634029]
@@ -41,6 +43,7 @@ layout_mode = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=386235392]
 layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="Label" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1570505069]
 layout_mode = 2
@@ -60,17 +63,17 @@ layout_mode = 2
 [node name="AddObj" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=1196885712]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 16
 text = "+ 10"
 
 [node name="SubObj" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer/VBoxContainer" unique_id=177726620]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 12
+theme_override_font_sizes/font_size = 16
 text = "- 10"
 
 [node name="Control" type="Control" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1413630580]
-custom_minimum_size = Vector2(14.065, 0)
+custom_minimum_size = Vector2(37.695, 0)
 layout_mode = 2
 
 [node name="ObjNum" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer/HBoxContainer" unique_id=1857414421]
@@ -79,11 +82,12 @@ layout_mode = 2
 text = "0"
 
 [node name="Control" type="Control" parent="VBoxContainer/HBoxContainer" unique_id=73057751]
-custom_minimum_size = Vector2(91.005, 0)
+custom_minimum_size = Vector2(56.435, 0)
 layout_mode = 2
 
 [node name="VBoxContainer2" type="VBoxContainer" parent="VBoxContainer/HBoxContainer" unique_id=688358961]
 layout_mode = 2
+size_flags_horizontal = 4
 
 [node name="Label2" type="Label" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=13432199]
 layout_mode = 2
@@ -97,6 +101,7 @@ layout_mode = 2
 unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
+button_pressed = true
 text = "1"
 
 [node name="16Luz" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer2" unique_id=1881721896]
@@ -106,12 +111,12 @@ toggle_mode = true
 text = "16"
 
 [node name="Control2" type="Control" parent="VBoxContainer" unique_id=1620627548]
-custom_minimum_size = Vector2(0, 17.315)
+custom_minimum_size = Vector2(0, 43.155)
 layout_mode = 2
 
 [node name="Iniciar" type="Button" parent="VBoxContainer" unique_id=1585985257]
 unique_name_in_owner = true
-custom_maximum_size = Vector2(76.695, -1)
+custom_maximum_size = Vector2(130.67, -1)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Iniciar"
