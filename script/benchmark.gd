@@ -9,14 +9,12 @@ extends Node
 ##
 ## Setup:
 ## - Nodes that draw terrain shadows with shadow.gdshader -> group "bench_sdf".
-## - Extra LightOccluder2Ds used only for the native baseline -> group "bench_native".
 ##
 ## Runs automatically when `run_on_start` is on, or when the game is launched
 ## with `-- --benchmark`.
 
 const BENCHMARK_UI = preload("uid://bc14jfg3yuu8t")
 
-const GROUP_NATIVE: StringName = &"bench_native"
 const output_dir: String = "user://benchmarks"
 
 
@@ -26,16 +24,14 @@ class BenchConfig:
 	var sun: bool      ## Sun shadows on SkewShadowSprites.
 	var lights: bool   ## ShadowLight shadows on SkewShadowSprites.
 	var sdf: bool      ## Terrain shadows (nodes in GROUP_SDF).
-	var native: bool   ## Godot's own LightOccluder2D shadows.
 
 	func _init(p_name: String, p_lighting: bool, p_sun: bool, p_lights: bool,
-			p_sdf: bool, p_native: bool) -> void:
+			p_sdf: bool) -> void:
 		name = p_name
 		lighting = p_lighting
 		sun = p_sun
 		lights = p_lights
 		sdf = p_sdf
-		native = p_native
 
 
 ## Results of one measurement (one configuration, one repetition).
@@ -56,8 +52,6 @@ class Run:
 @export var sample_seconds: float = 15.0
 ## Each repetition runs every configuration once, interleaved, to spread out thermal drift.
 @export_range(1, 10) var repetitions: int = 5
-## Adds a baseline using Godot's native LightOccluder2D shadows.
-@export var include_native: bool = true
 
 @export_group("Day cycle")
 ## In-game hour at the start of every measurement.
@@ -70,7 +64,6 @@ var time_manager: TimeManager
 var _casters: Array[SkewShadowSprite] = []
 var _lights: Array[Light2D] = []
 var _sdf_node: Polygon2D
-var _native_nodes: Array[CanvasItem] = []
 var _viewport_rid: RID
 ## Config name -> Array of Run, in config order.
 var _results: Dictionary[String, Array] = {}
@@ -83,16 +76,16 @@ var _output: String
 
 func _ready() -> void:
 	set_process(run_on_start)
-	
+
 	if not run_on_start:
 		return
-	
+
 	var ui: Node = BENCHMARK_UI.instantiate()
 	_fps_label = ui.get_node("%FPS")
 	_info_label = ui.get_node("%Info")
 	add_child(ui)
-	
-	
+
+
 	_run.call_deferred()
 
 func _process(_delta: float) -> void:
@@ -124,7 +117,7 @@ func _run() -> void:
 	if saved_path.is_empty():
 		_info_label.text = "Benchmark completo, mas falhou ao salvar os resultados (veja o Output)."
 	else:
-		_info_label.text = "Benchmark completo, resultados salvos em: %s" % saved_path
+		_info_label.text = "Benchmark completo, resultados salvos em:\n%s" % saved_path
 		print("[bench] Resultados salvos em: %s" % saved_path)
 
 	if quit_on_end:
@@ -133,16 +126,14 @@ func _run() -> void:
 
 func _build_configs() -> Array[BenchConfig]:
 	var configs: Array[BenchConfig] = [
-		#               name                lighting sun    lights sdf    native
-		BenchConfig.new("sem_iluminacao",   false,   false, false, false, false),
-		BenchConfig.new("so_luzes",         true,    false, false, false, false),
-		BenchConfig.new("sombra_sol",       true,    true,  false, false, false),
-		BenchConfig.new("sombra_luzes",     true,    false, true,  false, false),
-		BenchConfig.new("sdf_terreno",      true,    false, false, true,  false),
-		BenchConfig.new("completo",         true,    true,  true,  true,  false),
+		#               name                lighting sun    lights sdf
+		BenchConfig.new("sem_iluminacao",   false,   false, false, false),
+		BenchConfig.new("so_luzes",         true,    false, false, false),
+		BenchConfig.new("sombra_sol",       true,    true,  false, false),
+		BenchConfig.new("sombra_luzes",     true,    false, true,  false),
+		BenchConfig.new("sdf_terreno",      true,    false, false, true),
+		BenchConfig.new("completo",         true,    true,  true,  true),
 	]
-	if include_native:
-		configs.append(BenchConfig.new("nativo_occluder", true, false, false, false, true))
 	return configs
 
 
@@ -197,9 +188,6 @@ func _time_scale_for_sample() -> float:
 
 
 func _apply(config: BenchConfig) -> void:
-	for light: Light2D in _lights:
-		light.shadow_enabled = config.native
-
 	if time_manager:
 		time_manager.visible = config.lighting # Hidden CanvasModulate = full bright.
 		time_manager.sun_enabled = config.lighting
@@ -211,8 +199,6 @@ func _apply(config: BenchConfig) -> void:
 		sprite.set_shadows_active(any_shadow)
 
 	_sdf_node.visible = config.sdf
-	for item: CanvasItem in _native_nodes:
-		item.visible = config.native
 
 
 # ---------------- Setup ----------------
@@ -230,7 +216,11 @@ func _collect_nodes() -> void:
 	_lights.clear()
 	_walk(get_tree().current_scene)
 	_sdf_node = get_node("%SDF")
-	_native_nodes = _canvas_items_in(GROUP_NATIVE)
+	if not _sdf_node:
+		_write_line("[ERROR]: Could not find sdf node")
+	# Keep Godot's built-in Light2D shadows off so they don't add cost to any configuration.
+	for light: Light2D in _lights:
+		light.shadow_enabled = false
 
 
 func _walk(node: Node) -> void:
@@ -242,15 +232,6 @@ func _walk(node: Node) -> void:
 		time_manager = node as TimeManager
 	for child: Node in node.get_children():
 		_walk(child)
-
-
-func _canvas_items_in(group: StringName) -> Array[CanvasItem]:
-	var items: Array[CanvasItem] = []
-	for node: Node in get_tree().get_nodes_in_group(group):
-		var item: CanvasItem = node as CanvasItem
-		if item:
-			items.append(item)
-	return items
 
 
 # ---------------- Statistics ----------------
@@ -356,7 +337,7 @@ func _save_results(configs: Array[BenchConfig]) -> String:
 	if txt_error != OK:
 		push_error("[bench] Não foi possível salvar '%s': %s" % [txt_path, error_string(txt_error)])
 		return ""
-	
+
 	return ProjectSettings.globalize_path(txt_path)
 
 

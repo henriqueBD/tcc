@@ -17,8 +17,8 @@ size = Vector2(270, 180)
 [node name="Demo" type="Node2D" unique_id=382485575]
 script = ExtResource("1_wiwr6")
 warmup_seconds = 1.0
-sample_seconds = 3.0
-repetitions = 1
+sample_seconds = 5.0
+repetitions = 3
 
 [node name="Ground" type="TileMapLayer" parent="." unique_id=1646964682]
 z_index = -2

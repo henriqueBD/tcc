@@ -10,6 +10,9 @@ polygon = PackedVector2Array(-256, -156, -252, 159, -179, 158, -177, -156)
 [node name="Demo" type="Node2D" unique_id=382485575]
 script = ExtResource("1_5vh13")
 num_objects = 50
+warmup_seconds = 1.0
+sample_seconds = 5.0
+repetitions = 3
 
 [node name="Occluders" type="Node2D" parent="." unique_id=475937943]
 unique_name_in_owner = true
@@ -25,7 +28,8 @@ position = Vector2(466, 0)
 occluder = SubResource("OccluderPolygon2D_waf0q")
 occluder_light_mask = 0
 
-[node name="Polygon2D" type="Polygon2D" parent="Occluders" unique_id=1798897999]
+[node name="SDF" type="Polygon2D" parent="Occluders" unique_id=1798897999]
+unique_name_in_owner = true
 material = ExtResource("2_8h3yv")
 polygon = PackedVector2Array(-329, -183, -327, 153, 364, 159, 375, -187)
 uv = PackedVector2Array(-290.5, 194, -353.5, 398, 0.5, 383, -31.5, 187)

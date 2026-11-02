@@ -12,17 +12,18 @@ func _ready() -> void:
 func _start(level: Node, spawn_player: bool, run_benchmark: bool) -> void:
 	menu.queue_free()
 	
-	(level as ShadowBenchmark).run_on_start = run_benchmark
-	%Level.add_child(level)
-	
 	var player: CharacterBody2D = %Player
-	
 	if spawn_player:
 		player.show()
 		player.process_mode = Node.PROCESS_MODE_INHERIT
 	else:
 		player.queue_free()
 	
+	(level as ShadowBenchmark).run_on_start = run_benchmark
+	
+	await get_tree().physics_frame
+	
+	%Level.add_child(level)
 	$TimeManager.process_mode = Node.PROCESS_MODE_INHERIT
 
 func _change_menu() -> void:

@@ -19,7 +19,7 @@ func _ready() -> void:
 	_16_luz_btn.pressed.connect(_16_luz_press)
 
 func _increment_obj(increment: int) -> void:
-	_obj_num = clamp(_obj_num + increment, 0, 200)
+	_obj_num = clamp(_obj_num + increment, 0, 600)
 	_obj_num_label.text = str(_obj_num)
 
 func _1_luz_press() -> void:

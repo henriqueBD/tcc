@@ -8,7 +8,7 @@ const DEMO = preload("uid://dn2kia7y6hvw")
 const DEMO_LIMITATIONS = preload("uid://bbcg04k24odhk")
 
 var _spawn_player: bool = true
-var _run_benchmark: bool = true
+var _run_benchmark: bool = false
 
 func _ready() -> void:
 	_setup_toggles()
